@@ -1,0 +1,24 @@
+sudo: required
+services:
+  - docker
+language: generic
+#CI tests
+before_install:
+  - docker build -t peterhu/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true peterhu/react-test npm test
+
+after_success:
+  - docker build -t peterhu/multi-client ./client
+  - docker build -t peterhu/multi-nginx ./nginx
+  - docker build -t peterhu/multi-server ./server
+  - docker build -t peterhu/multi-worker ./worker
+  #Login to Dockerhub
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  #take images and push them to dockerhub
+  - docker push peterhu/multi-client
+  - docker push peterhu/multi-nginx
+  - docker push peterhu/multi-server
+  - docker push peterhu/multi-worker
+  
